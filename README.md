@@ -1,6 +1,8 @@
 # Zero-VA
 
-<img width="3000" height="4000" alt="20260509_082448" src="https://github.com/user-attachments/assets/895305f6-6efc-449d-80ae-98b0774309f2" />
+<p align="center">
+  <img width="600" height="800" alt="20260509_082448" src="https://github.com/user-attachments/assets/895305f6-6efc-449d-80ae-98b0774309f2" />
+</p>
 
 A minimal Voice Assistant for Home Assistant.
 
