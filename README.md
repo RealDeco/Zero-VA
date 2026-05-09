@@ -20,3 +20,21 @@ Together, these components create a compact Voice Assistant for ESPHome that int
 
 - WeAct Mono Audio Codec Module  
   https://www.aliexpress.com/item/1005010466805014.html
+
+- Any speaker, 4ohm will be louder. (example)
+  https://www.aliexpress.com/item/1005007614290956.html
+
+## Pinout
+
+| ESP32-S3 Zero | WeAct Module |
+|----------------|---------------|
+| GND            | GND           |
+| 3V3            | VCC           |
+| GPIO1          | SD            |
+| GPIO2          | DI            |
+| GPIO3          | WS            |
+| GPIO4          | DO            |
+| GPIO5          | BCK           |
+| GPIO6          | MC            |
+| GPIO7          | SDA           |
+| GPIO8          | SCL           |
