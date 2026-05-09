@@ -1,5 +1,7 @@
 # Zero-VA
 
+<img width="3000" height="4000" alt="20260509_082448" src="https://github.com/user-attachments/assets/895305f6-6efc-449d-80ae-98b0774309f2" />
+
 A minimal Voice Assistant for Home Assistant.
 
 This project uses an ESP32-S3 Zero together with a WeAct audio codec module that includes:
