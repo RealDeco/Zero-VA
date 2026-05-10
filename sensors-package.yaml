@@ -1,0 +1,16 @@
+binary_sensor:
+  - platform: gpio
+    id: presence
+    name: Presence
+    device_class: occupancy
+    pin:
+      number: GPIO7
+      mode: INPUT
+
+sensor:
+  - platform: bh1750
+    id: ambient_light
+    name: Ambient Light
+    i2c_id: i2c_adc_dac
+    address: 0x23
+    update_interval: 1s
