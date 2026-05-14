@@ -6,7 +6,7 @@ substitutions:
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
-  min_version: 2026.4.0
+  min_version: 2026.5.0
   name_add_mac_suffix: false
 
 esp32:
@@ -32,7 +32,7 @@ api:
         if (!id(boot_sound_played)) {
           id(boot_sound_played) = true;
           if (id(startup_sound_switch).state) {
-            id(play_sound)->execute(true, std::string("timer_finished_sound"));
+            id(play_sound)->execute(true, std::string("ready_sound"));
           }
         }
 
@@ -162,19 +162,9 @@ speaker:
     sample_rate: 48000
 
 external_components:
-  - source:
-      # https://github.com/esphome/esphome/pull/14933
-      type: git
-      url: https://github.com/kahrendt/esphome
-      ref: 89dd9fb3173a6ae7d5c730fa671f6089d7c9a2b8
-    components: [sendspin, generic_image]
-
-  - source:
-      type: git
-      url: https://github.com/esphome/esphome
-      ref: 57397a318a2e08ea4c44bb7836358a7da20985f2
-    components: [audio, audio_http]
-    refresh: 0s
+  - source: github://pr#16057
+    components: [generic_image, sendspin]
+    refresh: 1h
 
 sendspin:
   id: sendspin_hub
@@ -183,6 +173,8 @@ sendspin:
 audio_file:
   - id: timer_finished_sound
     file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/timer_finished.flac
+  - id: ready_sound
+    file: https://github.com/RealDeco/xiaozhi-esphome/raw/main/sounds/popup.flac
 
 media_source:
   - platform: audio_file
