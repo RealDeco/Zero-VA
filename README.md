@@ -1,10 +1,19 @@
-# Zero-VA
+<div align="center">
 
-<p align="center">
-  <img width="600" height="800" alt="20260509_082448" src="https://github.com/user-attachments/assets/895305f6-6efc-449d-80ae-98b0774309f2" />
-</p>
+<h1>Zero-VA</h1>
 
-A minimal Voice Assistant for Home Assistant.
+<img width="600" height="800" alt="20260509_082448" src="https://github.com/user-attachments/assets/895305f6-6efc-449d-80ae-98b0774309f2" />
+
+<br>
+
+<a href="https://realdeco.github.io/Zero-VA/Zero-VA-Sendspin/" target="_blank">
+  <img src="https://img.shields.io/badge/FIRMWARE-OPEN%20WEB%20INSTALLER-111827?style=for-the-badge&logo=googledocs&logoColor=white" alt="Open Firmware Installer">
+</a>
+
+</div>
+
+# A minimal Voice Assistant for Home Assistant.
+
 
 This project uses an ESP32-S3 Zero together with a WeAct audio codec module that includes:
 - a speaker amplifier (such as the MAX98357)
@@ -36,7 +45,9 @@ Together, these components create a compact Voice Assistant for ESPHome that int
 | GPIO7          | SDA           |
 | GPIO8          | SCL           |
 
+## Firmware
 
-Have fun! :)
+<a href="https://realdeco.github.io/Zero-VA/Zero-VA-Sendspin/" target="_blank">
+  <img src="https://img.shields.io/badge/FIRMWARE-OPEN%20WEB%20INSTALLER-111827?style=for-the-badge&logo=googledocs&logoColor=white" alt="Open Firmware Installer">
+</a>
 
-<img width="294" height="155" alt="Screenshot 2026-04-29 at 19 31 20" src="https://github.com/user-attachments/assets/f4c3fe8a-f8a2-4dbf-91e6-5c24e308afac" />
