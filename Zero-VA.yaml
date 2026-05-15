@@ -34,12 +34,15 @@ ota:
     id: ota_esphome
 
 logger:
-  level: DEBUG
+  level: WARN
 
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
   ap:
+  on_connect:
+    - delay: 5s
+    - ble.disable:
+  on_disconnect:
+    - ble.enable:
 
 captive_portal:
 
