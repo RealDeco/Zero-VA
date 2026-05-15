@@ -40,7 +40,6 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   ap:
-    password: "RZ7D3EzJdPM6"
 
 captive_portal:
 
