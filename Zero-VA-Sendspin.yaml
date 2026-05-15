@@ -8,9 +8,12 @@ esphome:
   friendly_name: ${friendly_name}
   min_version: 2026.5.0
   name_add_mac_suffix: false
+  project:
+    name: realdeco.zero_va
+    version: "2026.5.0"
 
 esp32:
-  board: esp32s3box
+  variant: esp32s3
   flash_size: 4MB
   cpu_frequency: 240MHz
   framework:
@@ -160,11 +163,6 @@ speaker:
     id: media_resampling_speaker
     output_speaker: media_mixing_input
     sample_rate: 48000
-
-external_components:
-  - source: github://pr#16057
-    components: [generic_image, sendspin]
-    refresh: 1h
 
 sendspin:
   id: sendspin_hub
