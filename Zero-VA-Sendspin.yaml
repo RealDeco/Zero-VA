@@ -48,19 +48,8 @@ logger:
 
 wifi:
   ap:
-  on_connect:
-    - delay: 5s
-    - ble.disable:
-  on_disconnect:
-    - ble.enable:
 
 improv_serial:
-
-esp32_ble:
-  name: zero-va-sendspin
-
-esp32_improv:
-  authorizer: center_button
 
 captive_portal:
 
