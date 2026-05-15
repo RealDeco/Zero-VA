@@ -7,7 +7,7 @@
 <br>
 
 <a href="https://realdeco.github.io/Zero-VA/Zero-VA-Sendspin/" target="_blank">
-  <img src="https://img.shields.io/badge/FIRMWARE-OPEN%20WEB%20INSTALLER-111827?style=for-the-badge&logo=googledocs&logoColor=white" alt="Open Firmware Installer">
+  <img src="https://img.shields.io/badge/🚀%20OPEN%20FIRMWARE%20INSTALLER-CLICK%20TO%20FLASH-0066ff?style=for-the-badge&labelColor=000000" alt="Open Firmware Installer">
 </a>
 
 </div>
@@ -48,6 +48,7 @@ Together, these components create a compact Voice Assistant for ESPHome that int
 ## Firmware
 
 <a href="https://realdeco.github.io/Zero-VA/Zero-VA-Sendspin/" target="_blank">
-  <img src="https://img.shields.io/badge/FIRMWARE-OPEN%20WEB%20INSTALLER-111827?style=for-the-badge&logo=googledocs&logoColor=white" alt="Open Firmware Installer">
+  <img src="https://img.shields.io/badge/🚀%20OPEN%20FIRMWARE%20INSTALLER-CLICK%20TO%20FLASH-0066ff?style=for-the-badge&labelColor=000000" alt="Open Firmware Installer">
 </a>
 
+---
