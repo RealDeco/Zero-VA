@@ -54,6 +54,14 @@ wifi:
   on_disconnect:
     - ble.enable:
 
+improv_serial:
+
+esp32_ble:
+  name: zero-va-sendspin
+
+esp32_improv:
+  authorizer: center_button
+
 captive_portal:
 
 globals:
@@ -79,7 +87,7 @@ binary_sensor:
       ignore_strapping_warning: true
       mode: INPUT_PULLUP
       inverted: true
-    id: left_top_button
+    id: center_button
     internal: true
     on_multi_click:
       - timing:
