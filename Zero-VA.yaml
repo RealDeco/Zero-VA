@@ -8,9 +8,12 @@ esphome:
   friendly_name: ${friendly_name}
   min_version: 2026.4.0
   name_add_mac_suffix: false
+  project:
+    name: realdeco.zero_va
+    version: "2026.5.0"
 
 esp32:
-  board: esp32s3box
+  variant: esp32s3
   flash_size: 4MB
   cpu_frequency: 240MHz
   framework:
