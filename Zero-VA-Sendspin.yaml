@@ -1,16 +1,35 @@
----
 substitutions:
   name: zero-va-sendspin
   friendly_name: Zero-VA-Sendspin
 
+packages:
+  extcomp:
+    url: https://github.com/RealDeco/xiaozhi-esphome.git
+    ref: main
+    refresh: 0s
+    files:
+      - devices/Under_Development/Modular/HW/sendspin-external_components_2026.10.0.yaml
+
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
-  min_version: 2026.5.0
+  min_version: 2026.10.0
   name_add_mac_suffix: true
   project:
     name: realdeco.zero_va
-    version: "2026.5.0"
+    version: "2026.10.0"
+  on_boot:
+    # I2S edges corrupt I2C to the wired ES8311 module; weaker drive on the I2S outputs fixes it.
+    # Runs after the full duplex I2S setup (600) and before the ES8311 setup (590).
+    - priority: 595
+      then:
+        - lambda: |-
+            for (auto pin : {GPIO_NUM_2, GPIO_NUM_3, GPIO_NUM_5, GPIO_NUM_6}) {
+              gpio_set_drive_capability(pin, GPIO_DRIVE_CAP_0);
+            }
+    - priority: -100
+      then:
+        - micro_wake_word.disable_model: stop  # Enabled state is saved; never boot with it on
 
 esp32:
   variant: esp32s3
@@ -18,10 +37,13 @@ esp32:
   cpu_frequency: 240MHz
   framework:
     type: esp-idf
+    advanced:
+      flash_chip: generic
     sdkconfig_options:
       CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
       CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+
 
 psram:
   mode: quad
@@ -68,6 +90,26 @@ button:
   - platform: factory_reset
     id: factory_reset_btn
     internal: true
+
+  - platform: restart
+    id: restart_button
+    name: "Restart"
+    entity_category: config
+    icon: "mdi:restart"
+
+  - platform: template
+    id: sendspin_confirm_pairing
+    name: "Sendspin Confirm Pairing"
+    icon: mdi:link-variant
+    entity_category: config
+    on_press:
+      - sendspin.confirm_pairing_window: sendspin_hub
+
+text_sensor:
+  - platform: sendspin
+    id: sendspin_pairing_code
+    type: pairing_code
+    name: "Sendspin Pairing Code"
 
 binary_sensor:
   - platform: gpio
@@ -116,25 +158,35 @@ i2s_audio:
       ignore_strapping_warning: true
     i2s_bclk_pin: GPIO5
     i2s_mclk_pin: GPIO6
+    full_duplex: true
 
 audio_dac:
   - platform: es8311
     i2c_id: i2c_adc_dac
     id: es8311_dac
+    setup_priority: 590  # After the I2S drive change in on_boot
     bits_per_sample: 16bit
     sample_rate: 48000
 
 microphone:
   - platform: i2s_audio
     id: box_mic
-    sample_rate: 16000
+    i2s_audio_id: i2s_audio_bus
+    sample_rate: 48000  # Full duplex: must match the speaker
     i2s_din_pin: GPIO4
     bits_per_sample: 16bit
     adc_type: external
+  - platform: resampler
+    id: voice_mic
+    microphone:
+      microphone: box_mic
+      channels: [0]
+    sample_rate: 16000
 
 speaker:
   - platform: i2s_audio
     id: box_speaker
+    i2s_audio_id: i2s_audio_bus
     i2s_dout_pin: GPIO2
     dac_type: external
     sample_rate: 48000
@@ -146,7 +198,7 @@ speaker:
   - platform: mixer
     id: mixing_speaker
     output_speaker: box_speaker
-    num_channels: 2
+    num_channels: 1  # Full duplex: must match the mono speaker
     task_stack_in_psram: true
     source_speakers:
       - id: announcement_mixing_input
@@ -166,6 +218,11 @@ speaker:
 sendspin:
   id: sendspin_hub
   task_stack_in_psram: false
+  on_pairing_failed:
+    - logger.log:
+        format: "Sendspin pairing failed: %s"
+        args: ["reason.c_str()"]
+        level: WARN
 
 audio_file:
   - id: timer_finished_sound
@@ -182,6 +239,8 @@ media_source:
     id: http_media_source
   - platform: sendspin
     id: sendspin_media_source
+    static_delay_adjustable: true
+    codecs: [flac, pcm]  # Opus left out to save flash
 
 media_player:
   - platform: sendspin
@@ -204,35 +263,38 @@ media_player:
     media_pipeline:
       format: FLAC
       sample_rate: 48000
-      num_channels: 2
+      num_channels: 1
       speaker: media_resampling_speaker
       sources:
         - http_media_source
         - sendspin_media_source
     volume_increment: 0.05
     volume_min: 0.4
-    volume_max: 0.85
+    volume_max: 0.65
 
     on_announcement:
       - script.stop: mp_idle_debounce
+      - mixer_speaker.apply_ducking:  # Lower music under announcements
+          id: media_mixing_input
+          decibel_reduction: 20
+          duration: 0.0s
+      # On device the wake word keeps running (full duplex), so "stop" can be heard
       - if:
           condition:
-            - microphone.is_capturing:
+            and:
+              - lambda: return id(wake_word_engine_location).current_option() == "In Home Assistant";
+              - microphone.is_capturing: voice_mic
           then:
             - script.execute: stop_wake_word
-            - if:
-                condition:
-                  - lambda: return id(wake_word_engine_location).current_option() == "In Home Assistant";
-                then:
-                  - wait_until:
-                      - not:
-                          voice_assistant.is_running:
+            - wait_until:
+                - not:
+                    voice_assistant.is_running:
 
     on_play:
       - script.stop: mp_idle_debounce
       - if:
           condition:
-            - microphone.is_capturing:
+            - microphone.is_capturing: voice_mic
           then:
             - script.execute: stop_wake_word
             - if:
@@ -258,19 +320,62 @@ media_player:
     on_idle:
       - script.execute: mp_idle_debounce
 
+    on_state:
+      - if:
+          condition:
+            not:
+              media_player.is_announcing:
+                id: speaker_media_player
+          then:
+            - mixer_speaker.apply_ducking:  # Bring music back after announcements
+                id: media_mixing_input
+                decibel_reduction: 0
+                duration: 1.0s
+
 micro_wake_word:
   id: mww
+  microphone: voice_mic
+  stop_after_detection: false  # Keep listening during replies so "stop" can be heard
   models:
     - okay_nabu
-    - hey_mycroft
     - hey_jarvis
+    # Only enabled while a TTS reply plays or a timer rings
+    - model: https://github.com/kahrendt/microWakeWord/releases/download/stop/stop.json
+      id: stop
+      internal: true
   on_wake_word_detected:
-    - voice_assistant.start:
-        wake_word: !lambda return wake_word;
+    - if:
+        condition:
+          switch.is_on: timer_ringing
+        then:
+          - switch.turn_off: timer_ringing
+        else:
+          - if:
+              condition:
+                voice_assistant.is_running:
+              then:
+                - voice_assistant.stop:
+              else:
+                - if:
+                    condition:
+                      media_player.is_announcing:
+                        id: speaker_media_player
+                    then:
+                      - media_player.stop:
+                          announcement: true
+                          id: speaker_media_player
+                    else:
+                      - if:
+                          condition:
+                            switch.is_on: wake_word_sound_switch
+                          then:
+                            - lambda: 'id(play_sound)->execute(false, std::string("ready_sound"));'
+                      - voice_assistant.start:
+                          wake_word: !lambda return wake_word;
 
 voice_assistant:
   id: va
-  microphone: box_mic
+  microphone: voice_mic
   media_player: speaker_media_player
   micro_wake_word: mww
   noise_suppression_level: 2
@@ -299,6 +404,7 @@ voice_assistant:
               green: 0%
               effect: "Fast Pulse"
   on_tts_start:
+    - script.execute: activate_stop_word_once
     - if:
         condition:
           - switch.is_on: use_listen_light
@@ -466,6 +572,29 @@ script:
             lambda: return id(wake_word_engine_location).current_option() == "On device";
           then:
             - micro_wake_word.stop:
+  - id: activate_stop_word_once
+    mode: restart
+    then:
+      - wait_until:
+          condition:
+            media_player.is_announcing:
+              id: speaker_media_player
+          timeout: 5s
+      - delay: 1s  # Skip the start of the reply
+      - if:
+          condition:
+            switch.is_off: timer_ringing
+          then:
+            - micro_wake_word.enable_model: stop
+      - wait_until:
+          not:
+            media_player.is_announcing:
+              id: speaker_media_player
+      - if:
+          condition:
+            switch.is_off: timer_ringing
+          then:
+            - micro_wake_word.disable_model: stop
   - id: ring_timer
     then:
       - script.execute: enable_repeat_one
@@ -528,6 +657,13 @@ switch:
     optimistic: true
     restore_mode: RESTORE_DEFAULT_ON
   - platform: template
+    id: wake_word_sound_switch
+    name: Wake word sound
+    icon: "mdi:ear-hearing"
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+  - platform: template
     name: Use listen light
     id: use_listen_light
     optimistic: true
@@ -552,11 +688,11 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
     entity_category: config
     on_turn_off:
-      - microphone.unmute:
+      - microphone.unmute: box_mic
       - script.execute: start_wake_word
     on_turn_on:
       - script.execute: stop_wake_word
-      - microphone.mute:
+      - microphone.mute: box_mic
 
   - platform: template
     id: timer_ringing
@@ -564,6 +700,7 @@ switch:
     internal: true
     restore_mode: ALWAYS_OFF
     on_turn_off:
+      - micro_wake_word.disable_model: stop
       - script.execute: disable_repeat
       - if:
           condition:
@@ -574,9 +711,16 @@ switch:
               announcement: true
               id: speaker_media_player
     on_turn_on:
+      - micro_wake_word.enable_model: stop
       - script.execute: ring_timer
       - delay: 15min
       - switch.turn_off: timer_ringing
+
+  - platform: sendspin
+    id: sendspin_unpaired_access
+    type: unpaired_access
+    name: "Sendspin Unpaired Access"
+    restore_mode: RESTORE_DEFAULT_ON
 
 select:
   - platform: template
@@ -609,7 +753,7 @@ light:
     default_transition_length: 0s
     chipset: WS2812
     num_leds: 1
-    rgb_order: grb
+    channel_colors: GRB
     effects:
       - pulse:
           name: "Slow Pulse"
